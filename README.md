@@ -1,7 +1,7 @@
 # Coloured Objects Classification under challenging Lighting Conditions
 ## (semisupervised learning with a Hybrid Energy-Neural-Graphical approach)
 
-Technique based on the paper: https://arxiv.org/pdf/2106.04527.pdf, but several parts are optimized / modified to suit challenging colour classification scenario. Major adaptation for colour augmentation used in semi-supervised learning is given in the lasst section below.
+Technique based on the paper: https://arxiv.org/pdf/2106.04527.pdf, and several parts are optimized / modified to suit challenging colour classification scenario. Major adaptation for colour augmentation used in semi-supervised learning is given in the last section below.
 
 You may need to do your own calculation for pixel statistics and replace your values in "datasets.py". You can refer the formulae in "calculate_image_mean_std.py"
 
