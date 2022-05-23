@@ -1,0 +1,11 @@
+opencv-python
+numpy
+torch==1.6.0
+torchgear==0.2.0b
+torchvision
+questionary
+tensorboardX
+faiss==1.7.1
+pytorch==1.8.1
+scipy==1.6.2
+tqdm==4.61.0
