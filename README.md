@@ -61,7 +61,7 @@ In this analysis, we sort the train data as the following structure for the time
 So before running any training, make sure to prepare you dataset accordingly.
 
 
-## PCA augmentation is the major augmentation to achieve better colour augmentation used in this research
+## PCA augmentation is used to achieve better colour augmentation used in this research
 You can take a look at this function in config/augmentations.py
 (I am currently experimentating using SVD for faster calculation, update soon...)
 
