@@ -3,6 +3,8 @@
 
 Technique based on the paper: https://arxiv.org/pdf/2106.04527.pdf, and several parts are optimized / modified to suit challenging colour classification scenario. Major adaptation for colour augmentation used in semi-supervised learning is given in the last section below.
 
+I also tried to use a very simple/light Resnet model (check the model file) here.
+
 You may need to do your own calculation for pixel statistics and replace your values in "datasets.py". You can refer the formulae in "calculate_image_mean_std.py"
 
 Currently it is set as the following for my use case (private dataset):
