@@ -47,7 +47,7 @@ To run with the 20 percent samples of balanced labels, use the argument --num-la
 
 To run with the split of random samples in 01.txt, use the argument --label-split 1
 
-## Data Structure
+## Data Folder Structure
 In this analysis, we sort the train data as the following structure for the time being for the data to be loaded.  
         
         root/class_x/imagex.png
