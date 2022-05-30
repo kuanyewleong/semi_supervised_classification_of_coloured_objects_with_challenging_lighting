@@ -66,20 +66,46 @@ You can take a look at this function in config/augmentations.py
 (I am currently experimentating using SVD for faster calculation, update soon...)
 
 ```python
-def pca_color_augmentation(image_array_input):
-    assert image_array_input.ndim == 3 and image_array_input.shape[2] == 3
-    assert image_array_input.dtype == np.uint8
+def fancy_pca(img, alpha_std=0.1):
+    img = asarray(img)
+    orig_img = img.astype(float).copy()
+    img = img / 255.0  # rescale to 0 to 1 range
 
-    img = image_array_input.reshape(-1, 3).astype(np.float32)
-    img = (img - np.mean(img, axis=0)) / np.std(img, axis=0)
+    # flatten image to columns of RGB
+    img_rs = img.reshape(-1, 3)    
+    # center mean
+    img_centered = img_rs - np.mean(img_rs, axis=0)
+    # 3x3 covariance matrix
+    img_cov = np.cov(img_centered, rowvar=False)
+    # eigen values and eigen vectors using numpy function
+    eig_vals, eig_vecs = np.linalg.eigh(img_cov)
 
-    cov = np.cov(img, rowvar=False)
-    lambd_eigen_value, p_eigen_vector = np.linalg.eig(cov)
+    # sort values and vector
+    sort_perm = eig_vals[::-1].argsort()
+    eig_vals[::-1].sort()
+    eig_vecs = eig_vecs[:, sort_perm]
 
-    rand = np.random.randn(3) * 0.1
-    delta = np.dot(p_eigen_vector, rand*lambd_eigen_value)
-    delta = (delta * 255.0).astype(np.int32)[np.newaxis, np.newaxis, :]
+    # get [p1, p2, p3]
+    m1 = np.column_stack((eig_vecs))
 
-    img_out = np.clip(image_array_input + delta, 0, 255).astype(np.uint8)
+    # get 3x1 matrix of eigen values multiplied by random variable draw from normal
+    # distribution with mean of 0 and standard deviation of 0.1
+    m2 = np.zeros((3, 1))
+    # according to the paper alpha should only be draw once per augmentation (not once per channel)
+    alpha = np.random.normal(0, alpha_std)
+
+    # broad cast to speed things up
+    m2[:, 0] = alpha * eig_vals[:]
+
+    # this is the vector that we're going to add to each pixel in a moment
+    add_vect = np.matrix(m1) * np.matrix(m2)
+
+    for idx in range(3):   # RGB
+        orig_img[..., idx] += add_vect[idx]
+    
+    orig_img = np.clip(orig_img, 0.0, 255.0)
+    orig_img = orig_img.astype(np.uint8)
+    img_out = Image.fromarray(orig_img)
+
     return img_out
 ```
