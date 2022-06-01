@@ -3,7 +3,55 @@ import PIL, PIL.ImageOps, PIL.ImageEnhance, PIL.ImageDraw
 import numpy as np
 import torch
 from PIL import Image
+from numpy import asarray
 
+# PCA color augmentation
+# adopted from:
+# http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf
+
+def fancy_pca(img, alpha_std=0.1):
+    img = asarray(img)
+    orig_img = img.astype(float).copy()
+    img = img / 255.0  # rescale to 0 to 1 range
+
+    # flatten image to columns of RGB
+    img_rs = img.reshape(-1, 3)    
+    # center mean
+    img_centered = img_rs - np.mean(img_rs, axis=0)
+    # 3x3 covariance matrix
+    img_cov = np.cov(img_centered, rowvar=False)
+    # eigen values and eigen vectors using numpy function
+    eig_vals, eig_vecs = np.linalg.eigh(img_cov)
+
+    # sort values and vector
+    sort_perm = eig_vals[::-1].argsort()
+    eig_vals[::-1].sort()
+    eig_vecs = eig_vecs[:, sort_perm]
+
+    # get [p1, p2, p3]
+    m1 = np.column_stack((eig_vecs))
+
+    # get 3x1 matrix of eigen values multiplied by random variable draw from normal
+    # distribution with mean of 0 and standard deviation of 0.1
+    m2 = np.zeros((3, 1))
+    # according to the paper alpha should only be draw once per augmentation (not once per channel)
+    alpha = np.random.normal(0, alpha_std)
+
+    # broad cast to speed things up
+    m2[:, 0] = alpha * eig_vals[:]
+
+    # this is the vector that we're going to add to each pixel in a moment
+    add_vect = np.matrix(m1) * np.matrix(m2)
+
+    for idx in range(3):   # RGB
+        orig_img[..., idx] += add_vect[idx]
+    
+    orig_img = np.clip(orig_img, 0.0, 255.0)
+    orig_img = orig_img.astype(np.uint8)
+    img_out = Image.fromarray(orig_img)
+
+    return img_out
+    
 
 def ShearX(img, v):  # [-0.3, 0.3]
     assert -0.3 <= v <= 0.3
@@ -155,20 +203,21 @@ def augment_list():  # 16 oeprations and their ranges
     # https://github.com/google-research/uda/blob/master/image/randaugment/policies.py#L57
     # https://github.com/tensorflow/tpu/blob/8462d083dd89489a79e3200bcc8d4063bf362186/models/official/efficientnet/autoaugment.py#L505
     l = [
-        (AutoContrast, 0, 1),
-        (Brightness, 0.05, 0.95),
-        (Color, 0.05, 0.95),
-        (Contrast, 0.05, 0.95),
-        (Equalize, 0, 1),
-        (Identity, 0, 1),
-        (Posterize, 4, 8),      
-        (Rotate, 0, 30),
-        (Sharpness,0.05, 0.95),
-        (ShearX, 0., 0.3),
-        (ShearY, 0., 0.3),
-        (Solarize, 0, 256),  
-        (TranslateX, 0., 0.3),
-        (TranslateY, 0., 0.3)
+        (AutoContrast, 0, 1),     
+        (Brightness, 0.05, 0.95), 
+        (Color, 0.05, 0.95),      
+        (Contrast, 0.05, 0.95),   
+        (Equalize, 0, 1),         
+        (Identity, 0, 1),         
+        (Posterize, 4, 8),        
+        (Rotate, 0, 30),          
+        (Sharpness,0.05, 0.95),   
+        (ShearX, 0., 0.3),        
+        (ShearY, 0., 0.3),        
+        (Solarize, 0, 256),       
+        (TranslateX, 0., 0.3),    
+        (TranslateY, 0., 0.3),    
+        (fancy_pca, 0.1, 0.2)     
     ]
 
     return l
